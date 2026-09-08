@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kartul Checker — SMK Remaja Pluit</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;color:#172033}
+header{background:#111827;color:white;padding:28px 5vw}.brand{font-size:24px;font-weight:800}.sub{opacity:.75;margin-top:5px}
+main{max-width:1180px;margin:30px auto;padding:0 20px}.hero{background:white;border:1px solid #e5e7eb;border-radius:22px;padding:32px;box-shadow:0 10px 30px #1118270d}
+h1{margin:0 0 10px;font-size:32px}.muted{color:#667085}.drop{margin-top:24px;border:2px dashed #aab3c2;border-radius:18px;padding:42px;text-align:center;cursor:pointer;background:#fafbfc}.drop:hover{background:#f2f5f9}
+button{border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;background:#111827;color:white}.secondary{background:#eef2f7;color:#172033}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.file{margin-top:16px;padding:14px;background:#f8fafc;border-radius:12px}
+.progress{height:10px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin:16px 0}.bar{height:100%;width:0;background:#111827;transition:.3s}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}.card{background:white;border:1px solid #e5e7eb;border-radius:16px;padding:18px}.num{font-size:27px;font-weight:800}.label{color:#667085;font-size:13px}
+.score{font-size:56px;font-weight:900}.status{font-weight:800}.ok{color:#067647}.warn{color:#b54708}.bad{color:#b42318}.info{color:#475467}
+.section{margin-top:22px;background:white;border:1px solid #e5e7eb;border-radius:18px;padding:22px}.section h2{margin-top:0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:12px;border-bottom:1px solid #eef0f3;text-align:left;vertical-align:top}th{background:#f8fafc}
+.badge{padding:5px 9px;border-radius:99px;font-weight:700;font-size:11px;display:inline-block}.b-ok{background:#ecfdf3;color:#067647}.b-warn{background:#fffaeb;color:#b54708}.b-bad{background:#fef3f2;color:#b42318}.b-info{background:#f2f4f7;color:#475467}.b-check{background:#fff7ed;color:#9a3412}.detail{line-height:1.5}.quote{display:block;margin-top:5px;padding:8px 10px;background:#f8fafc;border-left:3px solid #98a2b3;border-radius:5px}.fix{margin-top:5px;font-weight:600}
+small{color:#667085}.hidden{display:none}@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}h1{font-size:25px}}@media(max-width:520px){.grid{grid-template-columns:1fr}.hero{padding:22px}table{font-size:12px}}
+</style>
+</head>
+<body>
+<header><div class="brand">KARTUL CHECKER</div><div class="sub">Pemeriksa Kesesuaian Karya Tulis · SMK Remaja Pluit · 2026/2027</div></header>
+<main>
+<section class="hero">
+<h1>Periksa karya tulis sesuai panduan</h1>
+<p class="muted">Upload PDF atau DOCX. Sistem memeriksa sistematika, BAB/subbab, format yang dapat diverifikasi, typo/ejaan, kata terulang, spasi, saran perbaikan, lokasi halaman, status PERIKSA, dan skor.</p>
+<label class="drop" id="drop">
+<strong>Tarik file ke sini</strong><br><span class="muted">atau klik untuk memilih PDF/DOCX</span>
+<input id="file" type="file" accept=".pdf,.docx" hidden>
+</label>
+<div id="fileInfo" class="file hidden"></div>
+<div class="actions"><button id="run" disabled>Mulai Pemeriksaan</button><button id="demo" class="secondary">Lihat contoh hasil</button></div>
+<div id="progressWrap" class="hidden"><div class="progress"><div class="bar" id="bar"></div></div><small id="step">Menyiapkan...</small></div>
+</section>
+
+<div id="result" class="hidden">
+<section class="section">
+<div style="display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap">
+<div><div class="score" id="score">—</div><div class="status" id="status">—</div><p class="muted">Skor berbobot berdasarkan aturan panduan yang terdeteksi.</p></div>
+<div><button onclick="window.print()">Cetak / Simpan PDF</button></div>
+</div>
+</section>
+<div class="grid">
+<div class="card"><div class="num ok" id="nOk">0</div><div class="label">Sesuai</div></div>
+<div class="card"><div class="num warn" id="nWarn">0</div><div class="label">Perlu diperbaiki</div></div>
+<div class="card"><div class="num bad" id="nBad">0</div><div class="label">Tidak sesuai</div></div>
+<div class="card"><div class="num info" id="nInfo">0</div><div class="label">Tidak dapat diverifikasi</div></div>
+</div>
+<section class="section">
+<h2>Temuan pemeriksaan</h2>
+<table><thead><tr><th>No</th><th>Bagian</th><th>Halaman</th><th>Aturan</th><th>Hasil</th><th>Status</th><th>Saran</th></tr></thead><tbody id="findings"></tbody></table>
+</section>
+<section class="section">
+<h2>Ringkasan pemeriksaan teks</h2>
+<div class="grid" style="margin-top:12px">
+<div class="card"><div class="num bad" id="nTypo">0</div><div class="label">Kemungkinan typo/ejaan</div></div>
+<div class="card"><div class="num warn" id="nRepeat">0</div><div class="label">Kata terulang</div></div>
+<div class="card"><div class="num warn" id="nDouble">0</div><div class="label">Spasi ganda</div></div>
+<div class="card"><div class="num warn" id="nPunct">0</div><div class="label">Spasi sebelum tanda baca</div></div>
+</div>
+<p class="muted">Nama perusahaan, nama orang, singkatan, dan istilah khusus tidak langsung dianggap salah; kandidat tersebut diberi status <b>PERIKSA</b>.</p>
+</section>
+<section class="section"><h2>Catatan akurasi</h2><p class="muted">Pemeriksaan otomatis tidak boleh menyatakan format salah bila metadata/struktur file tidak menyediakan bukti yang cukup. Pada kondisi tersebut hasil ditandai <b>Tidak dapat diverifikasi</b>. Untuk pemeriksaan visual penuh, gunakan DOCX asli atau PDF yang mempertahankan layout.</p></section>
+</div>
+</main>
+<script type="module">
+const pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs");
+const JSZip = (await import("https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm")).default;
+pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+
+const input=document.getElementById('file'),drop=document.getElementById('drop'),run=document.getElementById('run'),info=document.getElementById('fileInfo');
+let selected=null;
+drop.onclick=()=>input.click();
+input.onchange=e=>selectFile(e.target.files[0]);
+drop.ondragover=e=>{e.preventDefault();drop.style.background="#eef2f7"};
+drop.ondragleave=()=>drop.style.background="";
+drop.ondrop=e=>{e.preventDefault();drop.style.background="";selectFile(e.dataTransfer.files[0])};
+function selectFile(f){if(!f)return;if(!/(\.pdf|\.docx)$/i.test(f.name)){alert("Gunakan PDF atau DOCX.");return}selected=f;info.classList.remove("hidden");info.textContent=`${f.name} · ${(f.size/1024/1024).toFixed(2)} MB`;run.disabled=false}
+
+function norm(s){return (s||"").toUpperCase().replace(/[–—]/g,"-").replace(/\u00a0/g," ").replace(/\s+/g," ").trim()}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function hasAny(t,a){return a.some(x=>t.includes(norm(x)))}
+function f(cat,part,page,rule,result,status,suggest,detail=""){return {cat,part,page,rule,result,status,suggest,detail}}
+function pageAt(d,index){
+ if(!d.pages.length)return "—";
+ let pos=0;
+ for(let i=0;i<d.pages.length;i++){if(index<=pos+d.pages[i].length)return i+1;pos+=d.pages[i].length+1}
+ return d.pages.length;
+}
+function findPage(d,part){
+ if(!d.pages.length)return "—";
+ const q=/^BAB [IVX]+$/.test(part)?part:part.toUpperCase();
+ const i=d.pages.findIndex(p=>p.includes(q));return i>=0?i+1:"—";
+}
+
+async function extract(file){
+ if(file.name.toLowerCase().endsWith(".pdf")){
+   const buf=await file.arrayBuffer(),pdf=await pdfjsLib.getDocument({data:buf}).promise;
+   let pages=[],pageItems=[];
+   for(let i=1;i<=pdf.numPages;i++){
+     const p=await pdf.getPage(i),c=await p.getTextContent(),vp=p.getViewport({scale:1});
+     const items=c.items.map(x=>({str:x.str||"",x:x.transform?.[4]||0,y:x.transform?.[5]||0,w:x.width||0,h:Math.abs(x.transform?.[3]||0)}));
+     pageItems.push({width:vp.width,height:vp.height,items});
+     pages.push(items.map(x=>x.str).join(" "));
+   }
+   return {raw:pages.map((x,i)=>`PAGE_${i+1}\n${x}`).join("\n"),pages:pages.map(norm),count:pdf.numPages,type:"PDF",pageItems};
+ }
+ const ab=await file.arrayBuffer(),r=await mammoth.extractRawText({arrayBuffer:ab});
+ let docxml="", stylesxml="";
+ try{const z=await JSZip.loadAsync(ab);docxml=await z.file("word/document.xml")?.async("string")||"";stylesxml=await z.file("word/styles.xml")?.async("string")||"";}catch(e){}
+ return {raw:r.value,pages:[],count:null,type:"DOCX",docxml,stylesxml,pageItems:[]};
+}
+
+/* ---------- CEK EJAAN ---------- */
+function detectTypos(d){
+ const out=[],seen=new Set(),raw=d.raw||"";
+ const corrections={
+  RESIKO:"RISIKO",PRAKTEK:"PRAKTIK",IJIN:"IZIN",SUBYEK:"SUBJEK",OBYEKTIF:"OBJEKTIF",
+  AKTIFITAS:"AKTIVITAS",EFEKTIFITAS:"EFEKTIVITAS",MENGANALISA:"MENGANALISIS",
+  ANALISA:"ANALISIS",MERUBAH:"MENGUBAH",NASEHAT:"NASIHAT",KARIR:"KARIER",
+  SEKEDAR:"SEKADAR",HUTANG:"UTANG",DIMANA:"DI MANA",KEDALAM:"KE DALAM",
+  DIATAS:"DI ATAS",DIBAWAH:"DI BAWAH"
+ };
+ const re=/\b[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]{2,}\b/g;let m;
+ while((m=re.exec(raw))!==null){
+   const u=m[0].toUpperCase();
+   if(corrections[u]&&!seen.has(u)){
+    seen.add(u);
+    const page=pageAt(d,m.index);
+    const context=raw.slice(Math.max(0,m.index-70),Math.min(raw.length,m.index+m[0].length+100)).replace(/\s+/g," ");
+    out.push(f("Ejaan Bahasa Indonesia","Cek ejaan",page,
+      "Gunakan bentuk baku Bahasa Indonesia.",`Kata “${m[0]}”`, "bad",
+      `Ganti “${m[0]}” menjadi “${corrections[u]}”.`,
+      `Konteks: “…${context}…”`));
+   }
+ }
+ return out;
+}
+
+/* ---------- KATA TERULANG & SPASI ---------- */
+function detectRepeated(d){
+ const out=[],re=/\b([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]{1,})\s+\1\b/giu;let m;
+ while((m=re.exec(d.raw||""))!==null){
+  const context=(d.raw||"").slice(Math.max(0,m.index-65),Math.min((d.raw||"").length,m.index+m[0].length+80)).replace(/\s+/g," ");
+  out.push(f("Pemeriksaan teks","Kata terulang",pageAt(d,m.index),
+   "Kata yang sama tidak boleh terulang berturut-turut.",`“${m[0]}”`,
+   "warn",`Hapus salah satu kata “${m[1]}”.`,`Konteks: “…${context}…”`));
+  if(out.length>=50)break;
+ }
+ return out;
+}
+function detectSpacing(d){
+ const out=[],raw=d.raw||"";let m;
+ const re1=/ {2,}/g;
+ while((m=re1.exec(raw))!==null){
+  if(!/PAGE_\d+\s*$/.test(raw.slice(Math.max(0,m.index-12),m.index))){
+   const context=raw.slice(Math.max(0,m.index-55),Math.min(raw.length,m.index+80)).replace(/\s+/g," ");
+   out.push(f("Pemeriksaan teks","Spasi ganda",pageAt(d,m.index),
+    "Gunakan satu spasi antar kata.",`Ditemukan ${m[0].length} spasi berturut-turut`,
+    "warn","Ubah spasi ganda menjadi satu spasi.",`Konteks: “…${context}…”`));
+  }
+  if(out.length>=50)break;
+ }
+ const re2=/\s+([,.;:!?])/g;
+ while((m=re2.exec(raw))!==null){
+  const context=raw.slice(Math.max(0,m.index-55),Math.min(raw.length,m.index+80)).replace(/\s+/g," ");
+  out.push(f("Pemeriksaan teks","Spasi sebelum tanda baca",pageAt(d,m.index),
+   "Tidak ada spasi sebelum tanda baca.",`Ditemukan spasi sebelum “${m[1]}”`,
+   "warn",`Hapus spasi sebelum tanda “${m[1]}”.`,`Konteks: “…${context}…”`));
+  if(out.length>=100)break;
+ }
+ return out;
+}
+
+/* ---------- CEK ISTILAH INGGRIS WAJIB ITALIC ---------- */
+const englishTerms = new Set([
+ "abstract","abstracts","background","benchmark","brainstorming","branding","browser","business",
+ "business process","checklist","coding","computer","database","dashboard","deadline","design",
+ "digital","documentation","download","e-commerce","email","file","follow up","framework","frontend",
+ "hardware","heading","homepage","internship","interview","internet","keyword","layout","login",
+ "management","marketing","meeting","monitoring","network","online","offline","output","password",
+ "performance","planning","presentation","project","report","research","review","software","source",
+ "stakeholder","startup","storage","system","template","training","troubleshooting","upload","website",
+ "web","workflow","workshop","user","server","database","accounting","administration","cash flow",
+ "customer service","front office","back office","human resources","job description","quality control",
+ "standard operating procedure","point of sale","data entry","data processing","data analysis"
+]);
+const englishRegex = new RegExp("\\b("+[...englishTerms].sort((a,b)=>b.length-a.length).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")\\b","gi");
+
+function detectEnglishItalic(d){
+ const out=[],raw=d.raw||"";let m;
+ while((m=englishRegex.exec(raw))!==null){
+  const term=m[0], before=raw.slice(Math.max(0,m.index-120),m.index);
+  // Heuristik: teks mentah PDF/DOCX tidak mempertahankan italic, jadi beri PERIKSA.
+  const context=raw.slice(Math.max(0,m.index-65),Math.min(raw.length,m.index+term.length+85)).replace(/\s+/g," ");
+  out.push(f("Istilah Bahasa Inggris","Wajib italic/miring",pageAt(d,m.index),
+    "Istilah Bahasa Inggris yang digunakan sebagai istilah asing sebaiknya ditulis dengan huruf miring.",
+    `Istilah “${term}” ditemukan`, "check",
+    `Periksa format: ubah “${term}” menjadi huruf miring (italic), jika istilah tersebut memang digunakan sebagai istilah asing.`,
+    `Kalimat/konteks: “…${context}…”`));
+  if(out.length>=100)break;
+ }
+ return out;
+}
+
+
+/* ---------- FORMAT ABSTRAKSI, SUBBAB & ALINEA ---------- */
+function detectFormatRules(d){
+ const out=[],raw=d.raw||"",t=norm(raw);
+ const hasAbs=/\bABSTRAKSI?\b/.test(t);
+ if(hasAbs){
+  const m=/\bABSTRAKSI?\b/.exec(t), page=pageAt(d,m?.index||0);
+  out.push(f("Format Abstraksi","Kata ABSTRAKSI",page,
+   "Ditulis ABSTRAKSI dengan huruf kapital, posisi tengah, Times New Roman 10 pt, dan spasi 1.","Bagian ABSTRAK/ABSTRAKSI terdeteksi","check",
+   "Periksa alignment center, Times New Roman 10 pt, dan spasi 1 pada dokumen asli.","Parser teks tidak selalu menyimpan alignment/font/spasi."));
+  const km=/\bKATA KUNCI\b|\bKEYWORDS?\b/.exec(t);
+  if(km) out.push(f("Format Abstraksi","Kata kunci",pageAt(d,km.index),"Tulisan kata kunci harus ditebalkan.","Kata kunci terdeteksi","check","Pastikan label dan/atau tulisan kata kunci menggunakan bold.","Status PERIKSA karena ketebalan huruf tidak tersimpan pada ekstraksi teks."));
+  else out.push(f("Format Abstraksi","Kata kunci",page,"Abstraksi harus memuat kata kunci.","Tidak ditemukan","bad","Tambahkan bagian Kata Kunci.","Cari label KATA KUNCI/KEYWORDS pada abstraksi."));
+ }
+ const sub=/\b(\d+)\.(\d+)(?!\.)(?:\s+)([^\n]{2,100})/g; let m,count=0;
+ while((m=sub.exec(raw))!==null && count<100){
+  const title=m[3].trim();
+  if(/^\d/.test(title)) continue;
+  const badDot=/^\d+\.\d+\./.test(m[0]);
+  out.push(f("Judul Subbab & Sub-subbab",`Subbab ${m[1]}.${m[2]}`,pageAt(d,m.index),
+   "Subbab menggunakan penomoran bertingkat tanpa titik setelah nomor; judul Title Case; Times New Roman 12 pt.",
+   badDot?`Format “${m[0].slice(0,12)}” mengandung titik setelah nomor`:`Penomoran ${m[1]}.${m[2]} terdeteksi`,badDot?"bad":"check",
+   badDot?"Hapus titik setelah nomor subbab.":"Periksa Title Case, tanpa garis bawah/titik, font 12 pt, dan multilevel list.","Alignment, font, underline, jarak 3/2 spasi perlu diverifikasi pada file asli.")); count++;
+ }
+ const subsub=/\b(\d+)\.(\d+)\.(\d+)\.?\s+/g; while((m=subsub.exec(raw))!==null && count<160){
+  out.push(f("Judul Subbab & Sub-subbab",`Sub-subbab ${m[1]}.${m[2]}.${m[3]}`,pageAt(d,m.index),"Sub-sub bab menggunakan angka Arab bertingkat (multilevel list) tanpa titik penutup.",/\d+\.\d+\.\d+\.\s+/.test(m[0])?"Nomor diakhiri titik":"Nomor bertingkat terdeteksi",/\d+\.\d+\.\d+\.\s+/.test(m[0])?"bad":"check", "Periksa multilevel list dan hilangkan titik penutup jika ada.","Font, jarak, dan struktur list perlu diverifikasi pada file asli.")); count++;
+ }
+ const paras=raw.split(/\n+/).filter(x=>x.trim());
+ let paraCount=0; for(const line of paras){ if(paraCount>=12) break; if(/^\s{1,6}\S/.test(line) && line.length>40){
+   out.push(f("Alinea, Huruf & Spasi","Indent awal alinea",pageAt(d,raw.indexOf(line)),"Awal alinea menjorok 0,7 cm (7 ketukan).",`Indent teks terdeteksi secara tekstual pada “${line.trim().slice(0,55)}…”`,"check","Verifikasi first-line indent 0,7 cm pada Word.","Ekstraksi teks tidak menjamin jumlah spasi asli.")); paraCount++;
+  }}
+ out.push(f("Alinea, Huruf & Spasi","Font dan spasi paragraf","—","Times New Roman 12 pt; jarak antarbaris 2 spasi; baris lanjutan sejajar dengan awal teks.","Tidak dapat diverifikasi dari teks saja","info","Verifikasi font, line spacing, dan hanging/first-line alignment pada dokumen asli.","Metadata layout diperlukan."));
+ return out;
+}
+
+/* ---------- SISTEM PENOMORAN ---------- */
+function detectNumbering(d){
+ const out=[],raw=d.raw||"",t=norm(raw);
+ const romans=["I","II","III","IV","V","VI","VII","VIII","IX","X"];
+ const babMatches=[...t.matchAll(/\bBAB\s+([IVXLCDM]+)(?![A-Z0-9])/g)];
+ if(!babMatches.length) out.push(f("Sistem Penomoran","BAB angka Romawi","—","BAB menggunakan angka Romawi.","Tidak ditemukan","bad","Gunakan BAB I, BAB II, BAB III, dst.","Tidak ada pola BAB Romawi yang terbaca."));
+ else {
+  babMatches.forEach(m=>out.push(f("Sistem Penomoran","BAB Romawi",pageAt(d,m.index),"Bab ditulis menggunakan angka Romawi (BAB I, BAB II, dst.).",`BAB ${m[1]}`,"ok","Tidak ada tindakan","Format Romawi terdeteksi.")));
+ }
+ const badSub=[...raw.matchAll(/\b\d+\.\d+\.\s+/g)];
+ out.push(f("Sistem Penomoran","Subbab 1.1","—","Subbab menggunakan angka Arab bertingkat tanpa diakhiri titik.",badSub.length?`Ditemukan ${badSub.length} nomor subbab bertitik`:"Tidak ditemukan kesalahan titik penutup",badSub.length?"bad":"ok",badSub.length?"Ubah 1.1. menjadi 1.1 (tanpa titik).":"Tidak ada tindakan", "Pemeriksaan berbasis pola teks."));
+ const subs=[...raw.matchAll(/\b(\d+)\.(\d+)(?!\.)\s+/g)];
+ out.push(f("Sistem Penomoran","Subbab Arab","—","Subbab menggunakan format 1.1, 1.2, 1.3 tanpa titik penutup.",subs.length?`Ditemukan ${subs.length} nomor subbab`:"Tidak ditemukan",subs.length?"check":"bad",subs.length?"Periksa urutan dan konsistensi multilevel list.":"Gunakan penomoran 1.1, 1.2, dst.","Pola teks tidak dapat memastikan setting Multilevel List Word."));
+ const subsub=[...raw.matchAll(/\b\d+\.\d+\.\d+(?!\.)\s+/g)];
+ out.push(f("Sistem Penomoran","Sub-sub bab Arab bertingkat","—","Sub-sub bab menggunakan format 1.1.1, 1.1.2, dst.",subsub.length?`Ditemukan ${subsub.length} nomor`:"Tidak ditemukan",subsub.length?"check":"info",subsub.length?"Periksa konsistensi tingkat penomoran.":"Jika dokumen memiliki sub-sub bab, gunakan format 1.1.1.","Pemeriksaan berdasarkan pola teks."));
+ const letters=[...raw.matchAll(/(?:^|\n|\s)([a-z])\.\s+/g)];
+ const parens=[...raw.matchAll(/(?:^|\n|\s)([a-z])\)\s+/g)];
+ out.push(f("Sistem Penomoran","Poin huruf","—","Poin penjelas dapat menggunakan a., b., c.",letters.length?`Ditemukan ${letters.length} poin huruf`:"Tidak ditemukan",letters.length?"check":"info",letters.length?"Periksa konsistensi urutan a., b., c.":"Tidak wajib jika tidak ada poin penjelas.","Pola teks."));
+ out.push(f("Sistem Penomoran","Poin turunan huruf","—","Poin turunan dapat menggunakan a), b), c).",parens.length?`Ditemukan ${parens.length} poin turunan`:"Tidak ditemukan",parens.length?"check":"info",parens.length?"Periksa konsistensi urutan a), b), c).":"Tidak wajib jika tidak ada poin turunan.","Pola teks."));
+ return out;
+}
+
+/* ---------- SINGKATAN ---------- */
+function detectAbbreviations(d){
+ const out=[],raw=d.raw||"";
+ const defs=new Map(), reDef=/\b([A-Z][A-Za-zÀ-ÿ]*(?:\s+[A-Z][A-Za-zÀ-ÿ]*){0,8})\s*\(([A-Z][A-Z0-9]{1,9})\)/g; let m;
+ while((m=reDef.exec(raw))!==null){ if(!defs.has(m[2])) defs.set(m[2],m.index); }
+ const candidates=[...raw.matchAll(/\b[A-Z]{2,8}\b/g)].filter(x=>!/^BAB$|^PDF$|^DOCX$|^SMK$|^SMP$|^KTP$|^NIP$/.test(x[0]));
+ let flagged=0;
+ for(const c of candidates){
+  const ab=c[0], first=defs.get(ab); if(first===undefined){
+   const context=raw.slice(Math.max(0,c.index-80),Math.min(raw.length,c.index+100)).replace(/\s+/g," ");
+   out.push(f("Menulis Singkatan","Definisi singkatan",pageAt(d,c.index),"Kemunculan pertama nama ditulis lengkap lalu singkatan resmi dalam kurung; berikutnya cukup singkatan.",`Singkatan “${ab}” belum ditemukan definisi lengkap sebelum pemakaian pertama`,"check","Periksa apakah kemunculan pertama harus ditulis lengkap (ABCD) terlebih dahulu.",`Konteks: “…${context}…”`));
+   if(++flagged>=40) break;
+  }
+ }
+ if(!candidates.length) out.push(f("Menulis Singkatan","Pemeriksaan singkatan","—","Singkatan harus diperkenalkan dengan nama lengkap + singkatan resmi pada pemakaian pertama.","Tidak ada kandidat singkatan","info","Tidak ada tindakan.","Tidak ditemukan pola singkatan kapital 2–8 huruf."));
+ return out;
+}
+
+/* ---------- TABEL / GAMBAR / LAMPIRAN ---------- */
+function titleCaseCheck(s){
+ const words=s.replace(/[.:,;]+$/g,"").trim().split(/\s+/).filter(Boolean);
+ if(!words.length)return true;
+ return words.every(w=>/^[A-ZÀ-Ý][A-Za-zÀ-ÿ0-9'’-]*$/.test(w) || /^(dan|atau|dari|ke|di|dengan|untuk|yang|pada|dalam|terhadap|sebagai|oleh|atau)$/i.test(w));
+}
+function detectObjects(d){
+ const out=[],raw=d.raw||"";
+ const tableRe=/\bTabel\s+([0-9]+)\.([0-9]+)\.?\s*([^\n]{0,160})/gi; let m, n=0;
+ while((m=tableRe.exec(raw))!==null && n<80){
+  const full=m[0], title=m[3].trim();
+  out.push(f("Pengetikan Tabel",`Tabel ${m[1]}.${m[2]}`,pageAt(d,m.index),"Kata Tabel Title Case tanpa titik; nomor latin dikelompokkan berdasarkan bab; judul Title Case dan ditempatkan di bawah kata Tabel.",`Caption “${full.slice(0,100)}” terdeteksi`,"check","Periksa center, tanpa garis bawah/titik, judul Title Case, jarak 2 spasi, dan nomor sesuai bab.",title?`Judul: “${title}”`:"Judul tabel belum terbaca."));
+  const context=raw.slice(m.index,Math.min(raw.length,m.index+500));
+  const src=/\bSumber\s*:/i.exec(context);
+  out.push(f("Pengetikan Tabel","Sumber tabel",pageAt(d,m.index),"Jika tabel bersumber dari instansi/lembaga/buku, tulis Sumber: di sebelah kiri tabel.",src?"Sumber: terdeteksi":"Sumber tabel belum terdeteksi",src?"ok":"check",src?"Tidak ada tindakan":"Tambahkan Sumber: nama sumber jika tabel diambil dari sumber lain.","Sumber dapat berada setelah isi tabel sehingga parser teks hanya memberi indikator.")); n++;
+ }
+ if(!n) out.push(f("Pengetikan Tabel","Caption tabel","—","Tabel diberi nomor berdasarkan bab, misalnya Tabel 1.1, dan judul berada di bawah kata Tabel.","Tidak ditemukan caption tabel","info","Jika dokumen memuat tabel, gunakan format Tabel 1.1, Tabel 1.2, dst.","Tidak ada pola caption Tabel yang terbaca."));
+ const imgRe=/\bGambar\s+([0-9]+)\.([0-9]+)\.?\s*([^\n]{0,160})/gi; n=0;
+ while((m=imgRe.exec(raw))!==null && n<80){
+  const full=m[0], title=m[3].trim(), context=raw.slice(m.index,Math.min(raw.length,m.index+500)), src=/\bSumber\s*:/i.exec(context);
+  out.push(f("Pengetikan Gambar / Ilustrasi",`Gambar ${m[1]}.${m[2]}`,pageAt(d,m.index),"Kata Gambar Title Case tanpa titik; nomor latin dikelompokkan berdasarkan bab; judul Title Case berada di bawah kata Gambar.",`Caption “${full.slice(0,100)}” terdeteksi`,"check","Periksa center, tanpa garis bawah/titik, judul Title Case, jarak 2 spasi, dan nomor sesuai bab.",title?`Judul: “${title}”`:"Judul gambar belum terbaca."));
+  out.push(f("Pengetikan Gambar / Ilustrasi","Sumber gambar",pageAt(d,m.index),"Jika gambar bersumber dari instansi/lembaga/buku, tulis Sumber: di sebelah kiri gambar.",src?"Sumber: terdeteksi":"Sumber gambar belum terdeteksi",src?"ok":"check",src?"Tidak ada tindakan":"Tambahkan Sumber: nama sumber jika gambar diambil dari sumber lain.","Sumber dapat berada setelah gambar.")); n++;
+ }
+ if(!n) out.push(f("Pengetikan Gambar / Ilustrasi","Caption gambar","—","Gambar/foto/grafik/peta/diagram diberi nomor berdasarkan bab, misalnya Gambar 1.1.","Tidak ditemukan caption gambar","info","Jika ada gambar, gunakan format Gambar 1.1, Gambar 1.2, dst.","Tidak ada pola caption Gambar yang terbaca."));
+ const lamp=/\bLAMPIRAN\s+([IVXLCDM]+)\b/gi; n=0;
+ while((m=lamp.exec(raw))!==null && n<30){
+  const next=raw.slice(m.index,m.index+350).split(/\n+/).filter(Boolean).slice(0,4).join(" ");
+  out.push(f("Pengetikan Lampiran",`Lampiran ${m[1]}`,pageAt(d,m.index),"LAMPIRAN kapital, center, tanpa titik; nomor menggunakan Romawi besar; judul seluruhnya kapital, center, tanpa titik.",`Lampiran ${m[1]} terdeteksi`,"check","Periksa posisi center, nomor Romawi besar, judul kapital, spasi 1 untuk judul multi-baris, dan tanpa titik.",`Konteks: “…${next}…”`)); n++;
+ }
+ if(!n && /\bLAMPIRAN\b/i.test(raw)) out.push(f("Pengetikan Lampiran","Nomor lampiran","—","Nomor urut lampiran menggunakan angka Romawi besar setelah kata LAMPIRAN.","LAMPIRAN ada tetapi nomor Romawi tidak terbaca","check","Gunakan LAMPIRAN I, LAMPIRAN II, dst.","Periksa judul dan nomor secara visual."));
+ return out;
+}
+
+/* ---------- NOMOR HALAMAN ---------- */
+function detectPageNumbers(d){
+ const out=[];
+ if(d.type!=="PDF" || !d.pageItems?.length){
+  return [f("Penulisan Nomor Halaman","Posisi & format nomor halaman","—","Preliminary: Romawi kecil di tengah bawah; halaman awal bab di tengah bawah; halaman lain kanan bawah dengan jarak 3 cm kanan dan 2 cm bawah.","Tidak dapat diverifikasi otomatis untuk DOCX","info","Periksa header/footer di Word: preliminary i, ii, iii; halaman awal bab center-bottom; halaman berikutnya right-bottom.","DOCX parser yang dipakai tidak mempertahankan posisi footer secara lengkap." )];
+ }
+ const total=d.pageItems.length; let found=0;
+ d.pageItems.forEach((pg,i)=>{
+  const bottom=pg.items.filter(x=>x.y<=Math.max(25,pg.height*0.10));
+  const nums=bottom.filter(x=>/^([ivxlcdm]+|\d{1,4})$/i.test((x.str||"").trim()));
+  if(!nums.length)return;
+  found++;
+  const x=nums[0].x, center=pg.width/2, right=pg.width*0.78;
+  const isRoman=/^[ivxlcdm]+$/i.test(nums[0].str.trim());
+  const pos=Math.abs(x-center)<pg.width*0.12?"tengah":x>right?"kanan":"lainnya";
+  const bab=/\bBAB\s+[IVXLCDM]+\b/.test(d.pages[i]||"");
+  let status="check",suggest="Periksa posisi dan format nomor halaman.";
+  if(bab && pos==="tengah") status="ok";
+  else if(!bab && i<Math.min(10,total) && isRoman && pos==="tengah") status="ok";
+  else if(!bab && !isRoman && pos==="kanan") status="ok";
+  out.push(f("Penulisan Nomor Halaman",`Halaman ${i+1}`,i+1,"Preliminary memakai Romawi kecil tengah-bawah; awal BAB tengah-bawah; halaman lain kanan-bawah.",`Nomor “${nums[0].str.trim()}” terdeteksi di ${pos}-bawah`,status,suggest,"Deteksi posisi menggunakan koordinat teks PDF; jarak cm absolut bergantung ukuran halaman."));
+ });
+ if(!found) out.push(f("Penulisan Nomor Halaman","Nomor halaman","—","Setiap halaman harus memiliki nomor sesuai bagian dokumen.","Nomor halaman tidak terdeteksi di area bawah","bad","Periksa footer/nomor halaman pada PDF.","Tidak ada angka/Romawi yang terbaca di area bawah halaman."));
+ out.push(f("Penulisan Nomor Halaman","Jarak tepi","—","Nomor kanan bawah berjarak 3 cm dari tepi kanan dan 2 cm dari tepi bawah.","Tidak dapat memastikan ukuran cm secara andal","info","Verifikasi Page Setup/footer position secara visual.","Koordinat PDF dapat diperiksa relatif, tetapi konversi cm bergantung ukuran halaman dan template."));
+ return out;
+}
+
+/* ---------- PEMERIKSAAN STRUKTUR ---------- */
+function makeFindings(d){
+ const t=norm(d.raw);
+ const out=[];
+ const checks=[
+  ["Kelengkapan","BAB I",hasAny(t,["BAB I","PENDAHULUAN"]),"BAB I PENDAHULUAN harus ada.","Pastikan BAB I tersedia."],
+  ["Kelengkapan","BAB II",hasAny(t,["BAB II","LANDASAN TEORI"]),"BAB II LANDASAN TEORI harus ada.","Pastikan BAB II tersedia."],
+  ["Kelengkapan","BAB III",hasAny(t,["BAB III","TINJAUAN UMUM"]),"BAB III TINJAUAN UMUM harus ada.","Pastikan BAB III tersedia."],
+  ["Kelengkapan","BAB IV",hasAny(t,["BAB IV","PELAKSANAAN"]),"BAB IV PELAKSANAAN harus ada.","Pastikan BAB IV tersedia."],
+  ["Kelengkapan","BAB V",hasAny(t,["BAB V","PENUTUP","KESIMPULAN DAN SARAN"]),"BAB V PENUTUP/KESIMPULAN DAN SARAN harus ada.","Pastikan BAB V tersedia."],
+  ["BAB I","Subbab 1.1",/1[.\s]1\s+LATAR BELAKANG/.test(t),"1.1 Latar Belakang","Tambahkan 1.1 Latar Belakang."],
+  ["BAB I","Subbab 1.2",/1[.\s]2\s+MAKSUD DAN TUJUAN/.test(t),"1.2 Maksud dan Tujuan Penulisan","Tambahkan 1.2."],
+  ["BAB I","Subbab 1.3",/1[.\s]3\s+MANFAAT/.test(t),"1.3 Manfaat","Tambahkan 1.3."],
+  ["BAB I","Subbab 1.4",/1[.\s]4\s+METODE PENGUMPULAN DATA/.test(t),"1.4 Metode Pengumpulan Data","Tambahkan 1.4."],
+  ["BAB I","Subbab 1.5",/1[.\s]5\s+LANDASAN HUKUM/.test(t),"1.5 Landasan Hukum","Periksa 1.5 sesuai panduan."],
+  ["BAB I","Subbab 1.6",/1[.\s]6\s+SISTEMATIKA PENULISAN/.test(t),"1.6 Sistematika Penulisan","Tambahkan 1.6."],
+  ["BAB III","Subbab 3.1",/3[.\s]1\s+SEJARAH UMUM PERUSAHAAN/.test(t),"3.1 Sejarah Umum Perusahaan","Tambahkan 3.1."],
+  ["BAB III","Subbab 3.2",/3[.\s]2\s+TUJUAN.*BERDIRI.*PERUSAHAAN/.test(t),"3.2 Tujuan Berdiri Perusahaan","Tambahkan 3.2."],
+  ["BAB III","Subbab 3.3",/3[.\s]3\s+STRUKTUR ORGANISASI PERUSAHAAN/.test(t),"3.3 Struktur Organisasi Perusahaan","Tambahkan 3.3."],
+  ["BAB III","Subbab 3.4",/3[.\s]4\s+TUGAS DAN WEWENANG/.test(t),"3.4 Tugas dan Wewenang","Tambahkan 3.4."],
+  ["BAB IV","Subbab 4.1",/4[.\s]1\s+BIDANG KERJA/.test(t),"4.1 Bidang Kerja","Tambahkan 4.1."],
+  ["BAB IV","Subbab 4.2",/4[.\s]2\s+PELAKSANAAN KERJA/.test(t),"4.2 Pelaksanaan Kerja","Tambahkan 4.2."],
+  ["BAB IV","Subbab 4.3",/4[.\s]3\s+KENDALA YANG DIHADAPI/.test(t),"4.3 Kendala yang Dihadapi","Tambahkan 4.3."],
+  ["BAB IV","Subbab 4.4",/4[.\s]4\s+CARA MENGATASI KENDALA/.test(t),"4.4 Cara Mengatasi Kendala","Tambahkan 4.4."],
+  ["BAB V","Subbab 5.1",/5[.\s]1\s+SIMPULAN/.test(t),"5.1 Simpulan","Tambahkan 5.1."],
+  ["BAB V","Subbab 5.2",/5[.\s]2\s+(SARAN|REKOMENDASI)/.test(t),"5.2 Saran/Rekomendasi","Tambahkan 5.2."],
+  ["Daftar Pustaka","Referensi",/\bDAFTAR PUSTAKA\b/.test(t),"Minimal 3 buku/referensi terkini atau 3 jurnal nasional.","Pastikan referensi memenuhi panduan."],
+  ["Penomoran","BAB",/BAB I/.test(t)&&/BAB II/.test(t)&&/BAB III/.test(t)&&/BAB IV/.test(t)&&/BAB V/.test(t),"BAB I–V menggunakan angka Romawi.","Periksa penomoran BAB pada dokumen asli."],
+  ["Abstrak","ABSTRAKSI",/ABSTRAK(SI)?/.test(t),"Bagian ABSTRAK/ABSTRAKSI harus ada.","Tambahkan bagian ABSTRAK/ABSTRAKSI."],
+  ["Cover","Identitas sekolah",t.includes("SMK REMAJA PLUIT"),"Identitas sekolah harus memuat SMK REMAJA PLUIT.","Periksa cover/halaman judul."],
+  ["Lampiran","Dokumen pelengkap",t.includes("LAMPIRAN"),"Lampiran harus tersedia.","Tambahkan lampiran yang diwajibkan."]
+ ];
+ checks.forEach(c=>out.push(f(c[0],c[1],findPage(d,c[1]),c[3],c[2]?"Terdeteksi":"Tidak ditemukan",c[2]?"ok":"bad",c[2]?"Tidak ada tindakan":c[4],
+   c[2]?"Bagian sesuai terdeteksi dalam dokumen.":"Bagian/ketentuan belum ditemukan. Sistem menampilkan lokasi “—” jika halaman tidak dapat dipastikan.")));
+ ["Margin","Font & spasi","Indent paragraf"].forEach(part=>{
+  const rule=part==="Margin"?"Kiri 4 cm; atas 4 cm; kanan 3 cm; bawah 3 cm.":part==="Font & spasi"?"Times New Roman minimal 12 pt dan spasi 2.":"Indent awal sekitar 0,7 cm.";
+  out.push(f("Format",part,"—",rule,"Tidak dapat diverifikasi secara andal dari parser teks","info",
+   "Verifikasi langsung pada file Word/PDF asli.", "Pemeriksaan format visual memerlukan informasi layout, bukan hanya teks."));
+ });
+ return out.concat(detectFormatRules(d),detectNumbering(d),detectAbbreviations(d),detectObjects(d),detectPageNumbers(d),detectTypos(d),detectRepeated(d),detectSpacing(d),detectEnglishItalic(d));
+}
+
+/* ---------- LAPORAN TERPERINCI ---------- */
+function render(findings){
+ const bad=findings.filter(x=>x.status==="bad").length,w=findings.filter(x=>x.status==="warn").length,
+ infoN=findings.filter(x=>x.status==="info").length,checkN=findings.filter(x=>x.status==="check").length,
+ ok=findings.filter(x=>x.status==="ok").length,total=ok+bad+w+checkN;
+ const score=Math.round(total?((ok+.5*w+.75*checkN)/total*100):100);
+ document.getElementById("score").textContent=score+"/100";
+ document.getElementById("status").textContent=score>=86?"Sangat Baik":score>=75?"Baik / Lulus KKM":score>=61?"Perlu Perbaikan":"Banyak Perbaikan";
+ ["nOk","nWarn","nBad","nInfo"].forEach((id,i)=>document.getElementById(id).textContent=[ok,w,bad,infoN][i]);
+ document.getElementById("nTypo").textContent=findings.filter(x=>x.cat==="Ejaan Bahasa Indonesia"&&x.part==="Cek ejaan").length;
+ document.getElementById("nRepeat").textContent=findings.filter(x=>x.part==="Kata terulang").length;
+ document.getElementById("nDouble").textContent=findings.filter(x=>x.part==="Spasi ganda").length;
+ document.getElementById("nPunct").textContent=findings.filter(x=>x.part==="Spasi sebelum tanda baca").length;
+
+ const tbody=document.getElementById("findings");tbody.innerHTML="";
+ findings.forEach((x,i)=>{
+  const label=x.status==="ok"?"SESUAI":x.status==="bad"?"TIDAK SESUAI":x.status==="warn"?"PERLU DIPERBAIKI":x.status==="check"?"PERIKSA":"TIDAK DAPAT DIVERIFIKASI";
+  const cls=x.status==="ok"?"b-ok":x.status==="bad"?"b-bad":x.status==="warn"?"b-warn":x.status==="check"?"b-check":"b-info";
+  const detail=x.detail?`<span class="quote">${esc(x.detail)}</span>`:"";
+  tbody.insertAdjacentHTML("beforeend",`<tr>
+   <td>${i+1}</td><td><b>${esc(x.part)}</b><br><small>${esc(x.cat)}</small></td><td>${esc(x.page)}</td>
+   <td>${esc(x.rule)}</td><td class="detail">${esc(x.result)}${detail}</td>
+   <td><span class="badge ${cls}">${label}</span></td>
+   <td class="detail"><span class="fix">${esc(x.suggest)}</span></td>
+  </tr>`);
+ });
+ document.getElementById("result").classList.remove("hidden");
+}
+
+/* Demo */
+document.getElementById("demo").onclick=()=>render([
+ f("Ejaan Bahasa Indonesia","Cek ejaan",12,"Gunakan bentuk baku Bahasa Indonesia.","Kata “resiko”","bad","Ganti “resiko” menjadi “risiko”.","Konteks: “…risiko pekerjaan yang mungkin terjadi…”"),
+ f("Pemeriksaan teks","Kata terulang",18,"Kata yang sama tidak boleh terulang berturut-turut.","“yang yang”","warn","Hapus salah satu kata “yang”.","Konteks: “…data yang yang diperoleh dari perusahaan…”"),
+ f("Pemeriksaan teks","Spasi ganda",21,"Gunakan satu spasi antar kata.","Ditemukan 2 spasi berturut-turut","warn","Ubah spasi ganda menjadi satu spasi.","Konteks: “…laporan  ini dibuat berdasarkan…”"),
+ f("Pemeriksaan teks","Spasi sebelum tanda baca",23,"Tidak ada spasi sebelum tanda baca.","Ditemukan spasi sebelum “,”","warn","Hapus spasi sebelum tanda koma.","Konteks: “…data perusahaan , kemudian…”"),
+ f("Istilah Bahasa Inggris","Wajib italic/miring",25,"Istilah Bahasa Inggris yang digunakan sebagai istilah asing sebaiknya ditulis dengan huruf miring.","Istilah “front office” ditemukan","check","Periksa format: tulis “front office” dengan huruf miring jika digunakan sebagai istilah asing.","Kalimat/konteks: “…penulis ditempatkan pada bagian front office perusahaan…”"),
+ f("Istilah Bahasa Inggris","Wajib italic/miring",26,"Istilah Bahasa Inggris yang digunakan sebagai istilah asing sebaiknya ditulis dengan huruf miring.","Istilah “data entry” ditemukan","check","Periksa format: tulis “data entry” dengan huruf miring jika digunakan sebagai istilah asing.","Kalimat/konteks: “…kegiatan data entry dilakukan setiap hari…”"),
+ f("Ejaan Bahasa Indonesia","Istilah khusus",4,"Nama perusahaan/orang, singkatan, atau istilah khusus perlu dikonfirmasi.","“INTEGRA”","check","Periksa apakah penulisan istilah/nama khusus sudah benar.","Istilah khusus tidak otomatis dianggap typo.")
+]);
+
+run.onclick=async()=>{
+ if(!selected)return;
+ document.getElementById("progressWrap").classList.remove("hidden");
+ const bar=document.getElementById("bar"),step=document.getElementById("step");
+ const phases=["Membaca dokumen...","Menganalisis sistematika...","Memeriksa BAB/subbab...","Memeriksa ejaan, pengulangan & spasi...","Memeriksa istilah Inggris & menyusun laporan..."];
+ for(let i=0;i<5;i++){bar.style.width=((i+1)*18)+"%";step.textContent=phases[i];await new Promise(r=>setTimeout(r,220))}
+ try{
+  const d=await extract(selected);bar.style.width="100%";step.textContent=`Selesai · ${d.type}${d.count?` · ${d.count} halaman`:""}`;
+  render(makeFindings(d));
+ }catch(e){step.textContent="Gagal membaca file.";alert("File tidak dapat diproses: "+e.message)}
+};
+</script>
+</body></html>
