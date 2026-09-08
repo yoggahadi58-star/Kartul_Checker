@@ -7,19 +7,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;color:#172033}
-header{background:#111827;color:white;padding:28px 5vw}.brand{font-size:24px;font-weight:800}.sub{opacity:.75;margin-top:5px}
-main{max-width:1180px;margin:30px auto;padding:0 20px}.hero{background:white;border:1px solid #e5e7eb;border-radius:22px;padding:32px;box-shadow:0 10px 30px #1118270d}
-h1{margin:0 0 10px;font-size:32px}.muted{color:#667085}.drop{margin-top:24px;border:2px dashed #aab3c2;border-radius:18px;padding:42px;text-align:center;cursor:pointer;background:#fafbfc}.drop:hover{background:#f2f5f9}
-button{border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;background:#111827;color:white}.secondary{background:#eef2f7;color:#172033}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.file{margin-top:16px;padding:14px;background:#f8fafc;border-radius:12px}
-.progress{height:10px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin:16px 0}.bar{height:100%;width:0;background:#111827;transition:.3s}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}.card{background:white;border:1px solid #e5e7eb;border-radius:16px;padding:18px}.num{font-size:27px;font-weight:800}.label{color:#667085;font-size:13px}
-.score{font-size:56px;font-weight:900}.status{font-weight:800}.ok{color:#067647}.warn{color:#b54708}.bad{color:#b42318}.info{color:#475467}
-.section{margin-top:22px;background:white;border:1px solid #e5e7eb;border-radius:18px;padding:22px}.section h2{margin-top:0}
-table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:12px;border-bottom:1px solid #eef0f3;text-align:left;vertical-align:top}th{background:#f8fafc}
-.badge{padding:5px 9px;border-radius:99px;font-weight:700;font-size:11px;display:inline-block}.b-ok{background:#ecfdf3;color:#067647}.b-warn{background:#fffaeb;color:#b54708}.b-bad{background:#fef3f2;color:#b42318}.b-info{background:#f2f4f7;color:#475467}.b-check{background:#fff7ed;color:#9a3412}.detail{line-height:1.5}.quote{display:block;margin-top:5px;padding:8px 10px;background:#f8fafc;border-left:3px solid #98a2b3;border-radius:5px}.fix{margin-top:5px;font-weight:600}
-small{color:#667085}.hidden{display:none}@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}h1{font-size:25px}}@media(max-width:520px){.grid{grid-template-columns:1fr}.hero{padding:22px}table{font-size:12px}}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f3f6fa;color:#172033;line-height:1.5}
+header{background:linear-gradient(135deg,#111827,#263449);color:white;padding:26px 5vw;box-shadow:0 4px 18px #11182718}.brand{font-size:24px;font-weight:800;letter-spacing:.4px}.sub{opacity:.75;margin-top:4px;font-size:14px}
+main{max-width:1240px;margin:28px auto;padding:0 20px}.hero,.section{background:white;border:1px solid #e5e9ef;border-radius:20px;box-shadow:0 8px 28px #1118270b}.hero{padding:30px}.hero h1{margin:0 0 8px;font-size:30px}.muted{color:#667085}
+.upload-box{margin-top:22px;border:2px dashed #b9c2cf;border-radius:18px;padding:30px;background:#f9fbfd;transition:.2s}.upload-box.drag{border-color:#667085;background:#f1f5f9}.upload-inner{display:flex;align-items:center;gap:18px;cursor:pointer}.upload-icon{width:54px;height:54px;border-radius:14px;background:#e9eef5;display:grid;place-items:center;font-size:25px}.upload-title{font-weight:800;font-size:16px}.upload-sub{font-size:13px;color:#667085;margin-top:3px}.file-card{margin-top:14px;padding:12px 14px;border:1px solid #e1e6ed;border-radius:12px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px}.file-meta{min-width:0}.file-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.file-size{font-size:12px;color:#667085}.remove{background:#f2f4f7;color:#344054;padding:7px 10px;border-radius:9px;font-size:12px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:11px;padding:11px 17px;font-weight:750;cursor:pointer;background:#111827;color:white}button:disabled{opacity:.45;cursor:not-allowed}.secondary{background:#eef2f7;color:#172033}.progress-wrap{margin-top:18px;padding:12px 14px;background:#f8fafc;border-radius:12px}.progress{height:8px;background:#e5e7eb;border-radius:10px;overflow:hidden}.bar{height:100%;width:0;background:#111827;transition:.3s}.progress-row{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:12px;color:#667085}
+.section{margin-top:20px;padding:22px}.result-head{display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap}.score{font-size:52px;font-weight:900;line-height:1}.status{font-weight:800;margin-top:5px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:18px}.card{background:white;border:1px solid #e5e9ef;border-radius:15px;padding:16px}.num{font-size:26px;font-weight:850}.label{color:#667085;font-size:12px;margin-top:2px}.ok{color:#067647}.warn{color:#b54708}.bad{color:#b42318}.info{color:#475467}
+.section-title{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}.section h2{margin:0;font-size:19px}.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.filter{border:1px solid #d0d5dd;background:white;border-radius:9px;padding:8px 10px;color:#344054}
+.table-wrap{overflow:auto;margin-top:14px;border:1px solid #e7ebf0;border-radius:12px}table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px}th,td{padding:11px 12px;border-bottom:1px solid #eef0f3;text-align:left;vertical-align:top}th{background:#f8fafc;font-size:12px;color:#475467;position:sticky;top:0}tr:last-child td{border-bottom:0}.detail{line-height:1.5}.quote{display:block;margin-top:6px;padding:7px 9px;background:#f8fafc;border-left:3px solid #98a2b3;border-radius:5px;color:#475467}.fix{margin-top:4px;font-weight:650}.badge{padding:5px 8px;border-radius:99px;font-weight:750;font-size:10px;display:inline-block;white-space:nowrap}.b-ok{background:#ecfdf3;color:#067647}.b-warn{background:#fffaeb;color:#b54708}.b-bad{background:#fef3f2;color:#b42318}.b-info{background:#f2f4f7;color:#475467}.b-check{background:#fff7ed;color:#9a3412}
+.note{padding:13px 15px;background:#f8fafc;border-radius:12px;color:#667085;font-size:13px}.hidden{display:none}.empty{padding:28px;text-align:center;color:#667085}.cat-list{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:14px}.cat-row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;background:#f8fafc;border-radius:10px;font-size:13px}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.hero{padding:22px}.upload-inner{align-items:flex-start}.cat-list{grid-template-columns:1fr}}@media(max-width:520px){.grid{grid-template-columns:1fr}.hero{padding:18px}.section{padding:17px}.hero h1{font-size:25px}}
+@media print{body{background:white}header,.upload-box,.actions,.progress-wrap,.tools,.note,#textSummary{display:none!important}.hero{box-shadow:none;border:0;padding:0}.section{box-shadow:none;border:0;padding:10px 0}.result-head button{display:none}.table-wrap{overflow:visible;border:0}table{min-width:0;font-size:10px}.section{break-inside:auto}.grid{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
@@ -28,13 +26,16 @@ small{color:#667085}.hidden{display:none}@media(max-width:800px){.grid{grid-temp
 <section class="hero">
 <h1>Periksa karya tulis sesuai panduan</h1>
 <p class="muted">Upload PDF atau DOCX. Sistem memeriksa sistematika, BAB/subbab, format yang dapat diverifikasi, typo/ejaan, kata terulang, spasi, saran perbaikan, lokasi halaman, status PERIKSA, dan skor.</p>
-<label class="drop" id="drop">
-<strong>Tarik file ke sini</strong><br><span class="muted">atau klik untuk memilih PDF/DOCX</span>
-<input id="file" type="file" accept=".pdf,.docx" hidden>
-</label>
-<div id="fileInfo" class="file hidden"></div>
-<div class="actions"><button id="run" disabled>Mulai Pemeriksaan</button><button id="demo" class="secondary">Lihat contoh hasil</button></div>
-<div id="progressWrap" class="hidden"><div class="progress"><div class="bar" id="bar"></div></div><small id="step">Menyiapkan...</small></div>
+<div class="upload-box" id="drop">
+  <label class="upload-inner" for="file">
+    <div class="upload-icon">↥</div>
+    <div><div class="upload-title">Pilih atau tarik file karya tulis</div><div class="upload-sub">Format yang didukung: PDF atau DOCX · Maksimal sesuai kemampuan browser</div></div>
+  </label>
+  <input id="file" type="file" accept=".pdf,.docx" hidden>
+</div>
+<div id="fileInfo" class="file-card hidden"></div>
+<div class="actions"><button id="run" disabled>Mulai Pemeriksaan</button><button id="reset" class="secondary" disabled>Ganti File</button><button id="demo" class="secondary">Lihat Contoh Hasil</button></div>
+<div id="progressWrap" class="progress-wrap hidden"><div class="progress"><div class="bar" id="bar"></div></div><div class="progress-row"><span id="step">Menyiapkan...</span><span id="pct">0%</span></div></div>
 </section>
 
 <div id="result" class="hidden">
@@ -51,20 +52,22 @@ small{color:#667085}.hidden{display:none}@media(max-width:800px){.grid{grid-temp
 <div class="card"><div class="num info" id="nInfo">0</div><div class="label">Tidak dapat diverifikasi</div></div>
 </div>
 <section class="section">
-<h2>Temuan pemeriksaan</h2>
-<table><thead><tr><th>No</th><th>Bagian</th><th>Halaman</th><th>Aturan</th><th>Hasil</th><th>Status</th><th>Saran</th></tr></thead><tbody id="findings"></tbody></table>
+<div class="section-title"><h2>Temuan Pemeriksaan</h2><small id="findingCount" class="muted"></small></div>
+<div class="tools"><select id="filterStatus" class="filter"><option value="all">Semua status</option><option value="bad">Tidak sesuai</option><option value="warn">Perlu diperbaiki</option><option value="check">Periksa</option><option value="info">Tidak dapat diverifikasi</option><option value="ok">Sesuai</option></select><select id="filterCat" class="filter"><option value="all">Semua kategori</option></select></div>
+<div class="table-wrap"><table><thead><tr><th>No</th><th>Bagian</th><th>Halaman</th><th>Aturan</th><th>Hasil</th><th>Status</th><th>Saran</th></tr></thead><tbody id="findings"></tbody></table></div>
 </section>
-<section class="section">
-<h2>Ringkasan pemeriksaan teks</h2>
+<section class="section" id="textSummary">
+<div class="section-title"><h2>Ringkasan Pemeriksaan Teks</h2></div>
 <div class="grid" style="margin-top:12px">
 <div class="card"><div class="num bad" id="nTypo">0</div><div class="label">Kemungkinan typo/ejaan</div></div>
 <div class="card"><div class="num warn" id="nRepeat">0</div><div class="label">Kata terulang</div></div>
 <div class="card"><div class="num warn" id="nDouble">0</div><div class="label">Spasi ganda</div></div>
 <div class="card"><div class="num warn" id="nPunct">0</div><div class="label">Spasi sebelum tanda baca</div></div>
 </div>
-<p class="muted">Nama perusahaan, nama orang, singkatan, dan istilah khusus tidak langsung dianggap salah; kandidat tersebut diberi status <b>PERIKSA</b>.</p>
+<div id="categorySummary" class="cat-list"></div>
+<p class="note" style="margin-top:14px">Nama perusahaan, nama orang, singkatan, dan istilah khusus tidak langsung dianggap salah; kandidat tersebut diberi status <b>PERIKSA</b>.</p>
 </section>
-<section class="section"><h2>Catatan akurasi</h2><p class="muted">Pemeriksaan otomatis tidak boleh menyatakan format salah bila metadata/struktur file tidak menyediakan bukti yang cukup. Pada kondisi tersebut hasil ditandai <b>Tidak dapat diverifikasi</b>. Untuk pemeriksaan visual penuh, gunakan DOCX asli atau PDF yang mempertahankan layout.</p></section>
+<section class="section"><h2>Catatan Akurasi</h2><p class="muted">Pemeriksaan otomatis tidak boleh menyatakan format salah bila metadata/struktur file tidak menyediakan bukti yang cukup. Pada kondisi tersebut hasil ditandai <b>Tidak dapat diverifikasi</b>. Untuk pemeriksaan visual penuh, gunakan DOCX asli atau PDF yang mempertahankan layout.</p></section>
 </div>
 </main>
 <script type="module">
@@ -72,14 +75,15 @@ const pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4
 const JSZip = (await import("https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm")).default;
 pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
 
-const input=document.getElementById('file'),drop=document.getElementById('drop'),run=document.getElementById('run'),info=document.getElementById('fileInfo');
-let selected=null;
+const input=document.getElementById('file'),drop=document.getElementById('drop'),run=document.getElementById('run'),reset=document.getElementById('reset'),info=document.getElementById('fileInfo');
+let selected=null, allFindings=[];
+reset.onclick=()=>{selected=null;input.value='';info.classList.add('hidden');info.innerHTML='';run.disabled=true;reset.disabled=true;document.getElementById('result').classList.add('hidden')};
 drop.onclick=()=>input.click();
 input.onchange=e=>selectFile(e.target.files[0]);
-drop.ondragover=e=>{e.preventDefault();drop.style.background="#eef2f7"};
-drop.ondragleave=()=>drop.style.background="";
-drop.ondrop=e=>{e.preventDefault();drop.style.background="";selectFile(e.dataTransfer.files[0])};
-function selectFile(f){if(!f)return;if(!/(\.pdf|\.docx)$/i.test(f.name)){alert("Gunakan PDF atau DOCX.");return}selected=f;info.classList.remove("hidden");info.textContent=`${f.name} · ${(f.size/1024/1024).toFixed(2)} MB`;run.disabled=false}
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag')};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');selectFile(e.dataTransfer.files[0])};
+function selectFile(f){if(!f)return;if(!/(\.pdf|\.docx)$/i.test(f.name)){alert("Gunakan PDF atau DOCX.");return}selected=f;info.classList.remove('hidden');reset.disabled=false;run.disabled=false;info.innerHTML=`<div class="file-meta"><div class="file-name">${esc(f.name)}</div><div class="file-size">${(f.size/1024/1024).toFixed(2)} MB · ${f.name.toLowerCase().endsWith('.pdf')?'PDF':'DOCX'}</div></div><button class="remove" type="button" onclick="document.getElementById('reset').click()">Hapus</button>`}
 
 function norm(s){return (s||"").toUpperCase().replace(/[–—]/g,"-").replace(/\u00a0/g," ").replace(/\s+/g," ").trim()}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
@@ -386,6 +390,7 @@ function makeFindings(d){
 
 /* ---------- LAPORAN TERPERINCI ---------- */
 function render(findings){
+ allFindings=findings;
  const bad=findings.filter(x=>x.status==="bad").length,w=findings.filter(x=>x.status==="warn").length,
  infoN=findings.filter(x=>x.status==="info").length,checkN=findings.filter(x=>x.status==="check").length,
  ok=findings.filter(x=>x.status==="ok").length,total=ok+bad+w+checkN;
@@ -398,19 +403,24 @@ function render(findings){
  document.getElementById("nDouble").textContent=findings.filter(x=>x.part==="Spasi ganda").length;
  document.getElementById("nPunct").textContent=findings.filter(x=>x.part==="Spasi sebelum tanda baca").length;
 
+ renderFiltered();
+ const catSel=document.getElementById('filterCat');catSel.innerHTML='<option value="all">Semua kategori</option>';
+ [...new Set(findings.map(x=>x.cat))].sort().forEach(c=>catSel.insertAdjacentHTML('beforeend',`<option value="${esc(c)}">${esc(c)}</option>`));
+ document.getElementById('filterStatus').onchange=renderFiltered;catSel.onchange=renderFiltered;
+ const counts={};findings.forEach(x=>counts[x.cat]=(counts[x.cat]||0)+1);document.getElementById('categorySummary').innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="cat-row"><span>${esc(k)}</span><b>${v}</b></div>`).join('');
+ document.getElementById("result").classList.remove("hidden");
+}
+function renderFiltered(){
+ const status=document.getElementById('filterStatus').value,cat=document.getElementById('filterCat').value;
+ const rows=allFindings.filter(x=>(status==='all'||x.status===status)&&(cat==='all'||x.cat===cat));
  const tbody=document.getElementById("findings");tbody.innerHTML="";
- findings.forEach((x,i)=>{
+ rows.forEach((x,i)=>{
   const label=x.status==="ok"?"SESUAI":x.status==="bad"?"TIDAK SESUAI":x.status==="warn"?"PERLU DIPERBAIKI":x.status==="check"?"PERIKSA":"TIDAK DAPAT DIVERIFIKASI";
   const cls=x.status==="ok"?"b-ok":x.status==="bad"?"b-bad":x.status==="warn"?"b-warn":x.status==="check"?"b-check":"b-info";
   const detail=x.detail?`<span class="quote">${esc(x.detail)}</span>`:"";
-  tbody.insertAdjacentHTML("beforeend",`<tr>
-   <td>${i+1}</td><td><b>${esc(x.part)}</b><br><small>${esc(x.cat)}</small></td><td>${esc(x.page)}</td>
-   <td>${esc(x.rule)}</td><td class="detail">${esc(x.result)}${detail}</td>
-   <td><span class="badge ${cls}">${label}</span></td>
-   <td class="detail"><span class="fix">${esc(x.suggest)}</span></td>
-  </tr>`);
+  tbody.insertAdjacentHTML("beforeend",`<tr><td>${i+1}</td><td><b>${esc(x.part)}</b><br><small>${esc(x.cat)}</small></td><td>${esc(x.page)}</td><td>${esc(x.rule)}</td><td class="detail">${esc(x.result)}${detail}</td><td><span class="badge ${cls}">${label}</span></td><td class="detail"><span class="fix">${esc(x.suggest)}</span></td></tr>`);
  });
- document.getElementById("result").classList.remove("hidden");
+ document.getElementById('findingCount').textContent=`Menampilkan ${rows.length} dari ${allFindings.length} temuan`;
 }
 
 /* Demo */
